@@ -32,7 +32,6 @@ export const missingEnv = (): string[] => {
   const missing: string[] = []
   if (!env.siteUrl) missing.push('VITE_SITE_URL')
   if (!env.whatsappNumber) missing.push('VITE_WHATSAPP_NUMBER')
-  if (!env.contactEmail) missing.push('VITE_CONTACT_EMAIL')
   if (!env.web3formsAccessKey) missing.push('VITE_WEB3FORMS_ACCESS_KEY')
   return missing
 }

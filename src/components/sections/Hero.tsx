@@ -24,12 +24,12 @@ export function Hero() {
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <QuoteLink location="hero" size="lg" />
             <ButtonLink
-              href="#proyectos"
+              href="#servicios"
               variant="secondary"
               size="lg"
-              onClick={() => trackEvent('view_projects_click', { location: 'hero' })}
+              onClick={() => trackEvent('view_services_click', { location: 'hero' })}
             >
-              Ver proyectos
+              Ver servicios
             </ButtonLink>
           </div>
         </div>

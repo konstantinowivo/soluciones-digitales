@@ -77,16 +77,41 @@ export function validateInquiry(values: InquiryInput): InquiryErrors {
 
 export const isFormConfigured = (): boolean => env.web3formsAccessKey.length > 0
 
-export class InquiryError extends Error {}
+/**
+ * Por qué falló el envío. Cada tipo tiene su propio mensaje y acciones en el modal de resultado
+ * (components/forms/ResultDialog.tsx).
+ */
+export type InquiryErrorKind =
+  | 'not_configured' // falta VITE_WEB3FORMS_ACCESS_KEY
+  | 'offline' // el navegador no tiene conexión
+  | 'network' // no se pudo llegar al servicio (conexión inestable, bloqueador o extensión)
+  | 'timeout' // el servicio no respondió a tiempo
+  | 'rate_limit' // demasiados envíos seguidos (HTTP 429)
+  | 'server' // el servicio falló (HTTP 5xx)
+  | 'rejected' // el servicio rechazó el envío (clave inválida, spam, datos)
+
+export class InquiryError extends Error {
+  readonly kind: InquiryErrorKind
+
+  constructor(kind: InquiryErrorKind) {
+    super(kind)
+    this.name = 'InquiryError'
+    this.kind = kind
+  }
+}
+
+const TIMEOUT_MS = 15000
+
+const isOffline = (): boolean => typeof navigator !== 'undefined' && navigator.onLine === false
 
 /**
  * Envía la consulta a Web3Forms (https://web3forms.com).
  * Solo se envían los datos que el visitante escribió; no se guardan en el navegador.
+ * Si falla, lanza un InquiryError con el motivo.
  */
 export async function submitInquiry(values: InquiryInput, honeypot: boolean): Promise<void> {
-  if (!isFormConfigured()) {
-    throw new InquiryError('El formulario todavía no está habilitado.')
-  }
+  if (!isFormConfigured()) throw new InquiryError('not_configured')
+  if (isOffline()) throw new InquiryError('offline')
 
   const need = values.need && isNeed(values.need) ? values.need : 'asesoramiento'
   const payload = {
@@ -104,21 +129,27 @@ export async function submitInquiry(values: InquiryInput, honeypot: boolean): Pr
   }
 
   const controller = new AbortController()
-  const timeout = window.setTimeout(() => controller.abort(), 15000)
+  const timeout = window.setTimeout(() => controller.abort(), TIMEOUT_MS)
   try {
-    const response = await fetch('https://api.web3forms.com/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    })
-    const data = (await response.json().catch(() => null)) as { success?: boolean } | null
-    if (!response.ok || !data?.success) {
-      throw new InquiryError('No pudimos enviar la consulta.')
+    let response: Response
+    try {
+      response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      })
+    } catch {
+      if (controller.signal.aborted) throw new InquiryError('timeout')
+      throw new InquiryError(isOffline() ? 'offline' : 'network')
     }
-  } catch (error) {
-    if (error instanceof InquiryError) throw error
-    throw new InquiryError('No pudimos enviar la consulta. Revisá tu conexión e intentá de nuevo.')
+
+    if (response.status === 429) throw new InquiryError('rate_limit')
+    if (response.status >= 500) throw new InquiryError('server')
+
+    const data = (await response.json().catch(() => null)) as { success?: boolean } | null
+    if (controller.signal.aborted) throw new InquiryError('timeout')
+    if (!response.ok || !data?.success) throw new InquiryError('rejected')
   } finally {
     window.clearTimeout(timeout)
   }

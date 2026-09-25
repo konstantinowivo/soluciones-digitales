@@ -3,7 +3,7 @@
  * navbar, footer, contacto y SEO leen de este archivo.
  */
 export const site = {
-  brand: 'Soluciones Digitales',
+  brand: 'Digital Solutions',
   /** Bajada del logo y de la ficha de contacto. */
   tagline: 'Desarrollo web y software a medida',
   shortDescription:
@@ -24,7 +24,6 @@ export const site = {
  */
 export const navItems = [
   { id: 'servicios', label: 'Servicios' },
-  { id: 'proyectos', label: 'Proyectos' },
   { id: 'como-trabajamos', label: 'Cómo trabajamos' },
   { id: 'nosotros', label: 'Nosotros' },
   { id: 'preguntas', label: 'Preguntas' },

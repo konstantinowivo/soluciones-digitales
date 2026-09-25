@@ -17,8 +17,9 @@ export type ConversionEvent =
   | 'whatsapp_click'
   | 'generate_lead'
   | 'quote_cta_click'
-  | 'view_projects_click'
+  | 'view_services_click'
   | 'form_start'
+  | 'form_error'
   | 'email_click'
 
 type EventParams = Record<string, string | number | boolean | undefined>

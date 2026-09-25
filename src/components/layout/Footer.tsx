@@ -4,7 +4,7 @@ import { navItems, site } from '../../config/site'
 import { services } from '../../data/services'
 import { useContactIntent } from '../../hooks/useContactIntent'
 import { trackEvent } from '../../lib/analytics'
-import { buildWhatsAppUrl, formatWhatsAppNumber } from '../../lib/whatsapp'
+import { buildWhatsAppUrl } from '../../lib/whatsapp'
 import { WhatsAppIcon } from '../ui/WhatsAppIcon'
 import { Logo } from './Logo'
 
@@ -59,7 +59,7 @@ export function Footer() {
                   onClick={() => trackEvent('whatsapp_click', { location: 'footer' })}
                 >
                   <WhatsAppIcon className="size-4 shrink-0" />
-                  {formatWhatsAppNumber(env.whatsappNumber)}
+                  Escribinos por WhatsApp
                 </a>
               </li>
             )}

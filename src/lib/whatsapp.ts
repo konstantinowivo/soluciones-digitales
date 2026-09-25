@@ -8,11 +8,3 @@ export const buildWhatsAppUrl = (message: string = DEFAULT_WHATSAPP_MESSAGE): st
   if (!isWhatsAppConfigured()) return ''
   return `https://wa.me/${env.whatsappNumber}?text=${encodeURIComponent(message)}`
 }
-
-/** Formato legible para mostrar el número (+54 9 351 ...). Solo presentación. */
-export const formatWhatsAppNumber = (digits: string): string => {
-  if (digits.startsWith('549') && digits.length === 13) {
-    return `+54 9 ${digits.slice(3, 6)} ${digits.slice(6, 9)}-${digits.slice(9)}`
-  }
-  return `+${digits}`
-}

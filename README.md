@@ -1,6 +1,6 @@
-# Soluciones Digitales — sitio comercial
+# Digital Solutions — sitio comercial
 
-Sitio one-page para conseguir consultas de clientes: servicios, proyectos reales, formulario con envío real, WhatsApp contextual, SEO y eventos de conversión listos para Google Ads.
+Sitio one-page para conseguir consultas de clientes: servicios, formulario con envío real, WhatsApp contextual, SEO y eventos de conversión listos para Google Ads.
 
 **Stack:** React 19 · TypeScript · Vite · Tailwind CSS v4 · Lucide React. Sin backend propio: el formulario usa [Web3Forms](https://web3forms.com).
 
@@ -34,7 +34,7 @@ Todas se leen en un único lugar: `src/config/env.ts`. Ningún componente accede
 | --- | --- | --- |
 | `VITE_SITE_URL` | Sí | URL final sin barra al final (`https://www.tudominio.com.ar`). Canonical, Open Graph, sitemap y robots. |
 | `VITE_WHATSAPP_NUMBER` | Sí | Número internacional, solo dígitos. Argentina móvil: `549` + área + número. |
-| `VITE_CONTACT_EMAIL` | Sí | Email que se muestra en contacto y footer. |
+| `VITE_CONTACT_EMAIL` | No | Email que se **muestra** en contacto y footer. Vacío = no se muestra. Las consultas llegan al email de la access key de Web3Forms. |
 | `VITE_WEB3FORMS_ACCESS_KEY` | Sí | Access key de Web3Forms para que el formulario envíe. |
 | `VITE_GA_ID` | No | Google Analytics 4 (`G-XXXXXXXXXX`). |
 | `VITE_GTM_ID` | No | Google Tag Manager (`GTM-XXXXXXX`). |
@@ -120,9 +120,10 @@ Eventos que envía el sitio (`src/lib/analytics.ts`):
 | `generate_lead` | Formulario enviado con éxito | `location`, `need` |
 | `whatsapp_click` | Clic en cualquier botón o link de WhatsApp | `location` (`floating_button`, `services`, `final_cta`, etc.), `need` |
 | `quote_cta_click` | Clic en "Solicitar presupuesto" o en las tarjetas de necesidad | `location`, `need` |
-| `view_projects_click` | Clic en "Ver proyectos" | `location` |
+| `view_services_click` | Clic en "Ver servicios" (hero) | `location` |
 | `form_start` | Primer foco en el formulario (una vez por visita) | `location`, `need` |
 | `email_click` | Clic en el email de contacto | `location` |
+| `form_error` | El envío del formulario falló | `location`, `kind` (`offline`, `network`, `timeout`, `rate_limit`, `server`, `rejected`, `not_configured`), `need` |
 
 `form_start` vs. `generate_lead` muestra cuánta gente empieza el formulario y no lo termina.
 
@@ -135,28 +136,6 @@ En desarrollo, los eventos se muestran en la consola del navegador con `console.
 1. Crear el contenedor y cargar el ID en `VITE_GTM_ID`.
 2. Cada evento de la tabla anterior se publica en `dataLayer` como `{ event: '<nombre>', location, need }`. En GTM se crean disparadores de tipo **Evento personalizado** con esos nombres.
 3. Si usás GTM, configurá GA4 dentro de GTM y dejá `VITE_GA_ID` vacío, para no contar cada visita dos veces.
-
-## Cómo agregar un nuevo proyecto
-
-Editar `src/data/projects.ts` y sumar un objeto al array. El orden del array es el orden en pantalla, y los dos primeros se muestran más grandes en desktop.
-
-```ts
-{
-  id: 'nuevo-cliente',            // único, sin espacios
-  name: 'Nuevo Cliente',
-  summary: 'Qué es, en una línea.',
-  description: 'Detalle opcional.', // opcional
-  technologies: ['Vue', 'Nuxt'],
-  url: 'https://www.nuevocliente.com', // '' = sin botón "Ver proyecto"
-  image: '/projects/nuevo-cliente.webp', // opcional
-  status: 'publicado',            // o 'en-desarrollo'
-  accent: '#1D4E89',              // color de la vista genérica si no hay imagen
-}
-```
-
-**Capturas:** guardarlas en `public/projects/` en formato WebP, a 1200×750 px (proporción 16:10), idealmente por debajo de 150 kB. Sin `image`, se muestra una vista genérica con el nombre del proyecto.
-
-**URLs:** los proyectos actuales tienen `url: ''` porque no hay URLs públicas cargadas todavía. Completalas en el mismo archivo.
 
 ## Cómo modificar servicios
 
@@ -195,27 +174,26 @@ La arquitectura ya está preparada para `/desarrollo-web`, `/ecommerce`, `/siste
 src/
 ├── components/
 │   ├── layout/      Navbar, Footer, Logo, WhatsApp flotante, aviso de config (dev)
-│   ├── sections/    Hero, Needs, Services/Technology, Process, Projects, About, Testimonials, FinalCta, Contact
+│   ├── sections/    Hero, Needs, Services/Technology, Process, About, Testimonials, Faq, FinalCta, Contact
 │   ├── forms/       ContactForm
 │   └── ui/          ButtonLink, QuoteLink, WhatsAppLink, SectionHeading, WhatsAppIcon
 ├── config/          env.ts, site.ts, routes.ts
 ├── context/         necesidad elegida (para formulario y WhatsApp)
-├── data/            needs, services, process, projects, about, contact, testimonials
+├── data/            needs, services, technologies, process, about, faq, contact, testimonials
 ├── hooks/           useContactIntent, useActiveSection
 ├── lib/             analytics, inquiry (validación + envío), whatsapp, sanitize
 ├── pages/           HomePage
 ├── entry-server.tsx render estático para el pre-renderizado
 └── main.tsx
 scripts/prerender.mjs
-public/              favicon, íconos, og-image, 404.html, projects/
+public/              favicon, íconos, og-image, 404.html
 ```
 
 ## Checklist antes de publicar
 
-- [ ] Variables cargadas en Vercel: `VITE_SITE_URL`, `VITE_WHATSAPP_NUMBER`, `VITE_CONTACT_EMAIL`, `VITE_WEB3FORMS_ACCESS_KEY`.
+- [ ] Variables cargadas en Vercel: `VITE_SITE_URL`, `VITE_WHATSAPP_NUMBER`, `VITE_WEB3FORMS_ACCESS_KEY` (y `VITE_CONTACT_EMAIL` solo si querés mostrar un email).
 - [ ] Envío de prueba del formulario recibido en el email.
 - [ ] El botón de WhatsApp abre el chat con el número correcto.
-- [ ] URLs y capturas de proyectos cargadas en `src/data/projects.ts`.
 - [ ] El texto de `src/data/about.ts` revisado.
 - [ ] GA4 o GTM configurado y `generate_lead` / `whatsapp_click` marcados como conversiones.
 - [ ] Sitemap enviado en Google Search Console.

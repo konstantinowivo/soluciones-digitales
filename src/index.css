@@ -135,3 +135,45 @@
 .needs-float {
   animation: needs-float 4.5s ease-in-out infinite;
 }
+
+/* Modal de resultado del formulario: entra con un "pop" y el ícono rebota. */
+@keyframes dialog-pop {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dialog-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes icon-bounce {
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.result-dialog[open] {
+  animation: dialog-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.result-dialog[open]::backdrop {
+  animation: dialog-fade 0.3s ease-out;
+}
+
+.result-dialog[open] .result-icon {
+  animation: icon-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.12s both;
+}

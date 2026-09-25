@@ -1,5 +1,5 @@
-import { CircleAlert, CircleCheck, LoaderCircle } from 'lucide-react'
-import { useEffect, useId, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
+import { CircleAlert, LoaderCircle } from 'lucide-react'
+import { useId, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { env } from '../../config/env'
 import { needOptions, whatsappMessageByNeed, type NeedValue } from '../../data/contact'
 import { useContactIntent } from '../../hooks/useContactIntent'
@@ -17,15 +17,7 @@ import {
   type InquiryInput,
 } from '../../lib/inquiry'
 import { buildWhatsAppUrl } from '../../lib/whatsapp'
-import { WhatsAppIcon } from '../ui/WhatsAppIcon'
-
-type Status = 'idle' | 'sending' | 'success' | 'error'
-
-/** Tiempo mínimo entre que se muestra el formulario y el envío (los bots envían al instante). */
-const MIN_FILL_MS = 3000
-/** Milisegundos transcurridos desde `start`. Fuera del componente: solo se usa en eventos. */
-const elapsedSince = (start: number): number => Date.now() - start
-const now = (): number => Date.now()
+import { ResultDialog, type SubmitResult } from './ResultDialog'
 
 const FIELD_ORDER: InquiryField[] = ['name', 'company', 'email', 'whatsapp', 'need', 'message']
 
@@ -36,25 +28,15 @@ export function ContactForm() {
   // Si el visitante elige una necesidad desde una tarjeta, el error de ese campo deja de aplicar.
   const errors: InquiryErrors = need ? { ...fieldErrors, need: undefined } : fieldErrors
   const [touched, setTouched] = useState<Partial<Record<InquiryField, boolean>>>({})
-  const [status, setStatus] = useState<Status>('idle')
-  const [submitError, setSubmitError] = useState('')
+  const [sending, setSending] = useState(false)
+  const [result, setResult] = useState<SubmitResult | null>(null)
+  /** Necesidad del último envío: el WhatsApp del modal mantiene el contexto aunque el formulario se limpie. */
+  const [resultNeed, setResultNeed] = useState<NeedValue | ''>('')
   const [honeypot, setHoneypot] = useState(false)
-  const mountedAt = useRef(0)
   const started = useRef(false)
-  const successRef = useRef<HTMLDivElement>(null)
-  const errorRef = useRef<HTMLDivElement>(null)
   const formId = useId()
 
   const allValues: InquiryInput = { ...values, need }
-
-  useEffect(() => {
-    mountedAt.current = now()
-  }, [])
-
-  useEffect(() => {
-    if (status === 'success') successRef.current?.focus()
-    if (status === 'error') errorRef.current?.focus()
-  }, [status])
 
   const update = (field: InquiryField) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const value = event.target.value
@@ -79,9 +61,44 @@ export function ContactForm() {
     setErrors((current) => ({ ...current, [field]: validateField(field, allValues) }))
   }
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const reset = () => {
+    setValues(emptyInquiry)
+    setNeed('')
+    setErrors({})
+    setTouched({})
+    started.current = false
+  }
+
+  /** Envía y muestra el resultado en el modal. Si falla, los datos quedan cargados para reintentar. */
+  const send = async () => {
+    if (sending) return
+    setResult(null)
+    setResultNeed(need)
+
+    // Anti-spam: el campo trampa solo lo completan bots → se descarta en silencio.
+    if (honeypot) {
+      setResult({ type: 'success' })
+      return
+    }
+
+    setSending(true)
+    try {
+      await submitInquiry(allValues, honeypot)
+      trackEvent('generate_lead', { location: 'contact_form', need: need || undefined })
+      reset()
+      setResult({ type: 'success' })
+    } catch (error) {
+      const kind = error instanceof InquiryError ? error.kind : 'rejected'
+      trackEvent('form_error', { location: 'contact_form', kind, need: need || undefined })
+      setResult({ type: 'error', kind })
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (status === 'sending') return
+    if (sending) return
 
     const found = validateInquiry(allValues)
     setErrors(found)
@@ -92,74 +109,7 @@ export function ContactForm() {
       return
     }
 
-    // Anti-spam: honeypot marcado o envío demasiado rápido → se descarta en silencio.
-    if (honeypot || elapsedSince(mountedAt.current) < MIN_FILL_MS) {
-      setStatus('success')
-      return
-    }
-
-    setStatus('sending')
-    setSubmitError('')
-    try {
-      await submitInquiry(allValues, honeypot)
-      trackEvent('generate_lead', { location: 'contact_form', need: allValues.need || undefined })
-      setStatus('success')
-    } catch (error) {
-      setSubmitError(error instanceof InquiryError ? error.message : 'No pudimos enviar la consulta.')
-      setStatus('error')
-    }
-  }
-
-  const reset = () => {
-    setValues(emptyInquiry)
-    setNeed('')
-    setErrors({})
-    setTouched({})
-    setStatus('idle')
-    mountedAt.current = now()
-    started.current = false
-  }
-
-  if (status === 'success') {
-    const successWhatsApp = buildWhatsAppUrl(need ? whatsappMessageByNeed[need] : undefined)
-    return (
-      <div
-        ref={successRef}
-        tabIndex={-1}
-        role="status"
-        className="flex flex-col items-start rounded-[var(--radius-card)] border border-line bg-surface p-8 sm:p-10"
-      >
-        <CircleCheck className="size-10 text-signal" aria-hidden="true" />
-        <p className="mt-5 text-2xl leading-snug font-semibold tracking-[-0.02em] text-navy">
-          ¡Gracias por contactarnos!
-        </p>
-        <p className="mt-2 text-lg leading-relaxed text-muted">
-          Recibimos tu consulta y te vamos a responder por email con los próximos pasos.
-        </p>
-        {successWhatsApp && (
-          <>
-            <p className="mt-6 text-[15px] text-ink">¿Es urgente? Escribinos y lo vemos ahora.</p>
-            <a
-              href={successWhatsApp}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackEvent('whatsapp_click', { location: 'form_success', need: need || undefined })}
-              className="mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-whatsapp px-5 text-[15px] font-semibold text-white transition-colors hover:bg-[#16733d]"
-            >
-              <WhatsAppIcon className="size-5" />
-              Hablar por WhatsApp
-            </a>
-          </>
-        )}
-        <button
-          type="button"
-          onClick={reset}
-          className="mt-7 text-[15px] font-semibold text-accent underline underline-offset-4 hover:text-accent-strong"
-        >
-          Enviar otra consulta
-        </button>
-      </div>
-    )
+    void send()
   }
 
   const fieldProps = (field: InquiryField) => ({
@@ -172,7 +122,7 @@ export function ContactForm() {
     className: 'field mt-2',
   })
 
-  const whatsappUrl = buildWhatsAppUrl()
+  const resultWhatsApp = buildWhatsAppUrl(resultNeed ? whatsappMessageByNeed[resultNeed] : undefined)
 
   return (
     <form
@@ -286,56 +236,13 @@ export function ContactForm() {
         </label>
       </div>
 
-      {status === 'error' && (
-        <div
-          ref={errorRef}
-          tabIndex={-1}
-          role="alert"
-          className="mt-6 flex gap-3 rounded-lg border border-danger/30 bg-danger/5 p-4 text-[15px] text-danger"
-        >
-          <CircleAlert className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-          <p>
-            {submitError}{' '}
-            {whatsappUrl || env.contactEmail ? (
-              <>
-                También podés escribirnos
-                {whatsappUrl && (
-                  <>
-                    {' '}por{' '}
-                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="font-semibold underline">
-                      WhatsApp
-                    </a>
-                  </>
-                )}
-                {whatsappUrl && env.contactEmail && ' o'}
-                {env.contactEmail && (
-                  <>
-                    {' '}a{' '}
-                    <a
-                      href={`mailto:${env.contactEmail}`}
-                      onClick={() => trackEvent('email_click', { location: 'form_error' })}
-                      className="font-semibold underline"
-                    >
-                      {env.contactEmail}
-                    </a>
-                  </>
-                )}
-                .
-              </>
-            ) : (
-              'Intentá de nuevo en unos minutos.'
-            )}
-          </p>
-        </div>
-      )}
-
       <div className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="submit"
-          disabled={status === 'sending'}
+          disabled={sending}
           className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-accent px-8 text-base font-semibold text-white transition-colors hover:bg-accent-strong disabled:cursor-wait disabled:opacity-80"
         >
-          {status === 'sending' ? (
+          {sending ? (
             <>
               <LoaderCircle className="size-5 animate-spin" aria-hidden="true" />
               Enviando…
@@ -356,6 +263,13 @@ export function ContactForm() {
           Dev: falta VITE_WEB3FORMS_ACCESS_KEY, el envío va a mostrar un error.
         </p>
       )}
+
+      <ResultDialog
+        result={result}
+        whatsappUrl={resultWhatsApp}
+        onClose={() => setResult(null)}
+        onRetry={() => void send()}
+      />
     </form>
   )
 }
