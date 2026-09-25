@@ -11,7 +11,12 @@ const GA_ID_PATTERN = /^G-[A-Z0-9]+$/i
 const GTM_ID_PATTERN = /^GTM-[A-Z0-9]+$/i
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const rawWhatsApp = digitsOnly(clean(import.meta.env.VITE_WHATSAPP_NUMBER))
+/**
+ * Número por defecto: es público de todos modos (va en cada link wa.me) y asegura que los botones
+ * de WhatsApp aparezcan aunque falte la variable en Vercel. La variable lo sigue pudiendo reemplazar.
+ */
+const DEFAULT_WHATSAPP_NUMBER = '5493415325391'
+const rawWhatsApp = digitsOnly(clean(import.meta.env.VITE_WHATSAPP_NUMBER)) || DEFAULT_WHATSAPP_NUMBER
 const rawEmail = clean(import.meta.env.VITE_CONTACT_EMAIL)
 const rawGa = clean(import.meta.env.VITE_GA_ID)
 const rawGtm = clean(import.meta.env.VITE_GTM_ID)
