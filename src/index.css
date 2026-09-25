@@ -21,7 +21,9 @@
   --color-signal: #0e7a6b;
   --color-signal-soft: #e3f3f0;
   --color-danger: #b42318;
-  --color-whatsapp: #1c8a4a;
+  /* Verde WhatsApp oscurecido para contraste AA con texto blanco (5.9:1). */
+  --color-whatsapp: #16733d;
+  --color-whatsapp-strong: #125f33;
 
   --radius-card: 14px;
 }

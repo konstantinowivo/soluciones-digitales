@@ -48,7 +48,7 @@ export function Navbar() {
       }`}
     >
       <nav aria-label="Principal" className="container-site flex h-16 items-center justify-between gap-6">
-        <a href="#inicio" className="rounded-md" aria-label="Ir al inicio" onClick={() => setOpen(false)}>
+        <a href="#inicio" className="rounded-md" onClick={() => setOpen(false)}>
           <Logo />
         </a>
 

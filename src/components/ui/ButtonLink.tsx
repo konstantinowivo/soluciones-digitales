@@ -11,7 +11,7 @@ const variants: Record<Variant, string> = {
   secondary: 'border border-line bg-surface text-ink hover:border-ink/40 hover:bg-canvas',
   light: 'bg-white text-navy hover:bg-accent-soft',
   'ghost-light': 'border border-white/30 text-white hover:border-white/70 hover:bg-white/10',
-  whatsapp: 'bg-whatsapp text-white hover:bg-[#16733d]',
+  whatsapp: 'bg-whatsapp text-white hover:bg-whatsapp-strong',
 }
 
 const sizes: Record<Size, string> = {

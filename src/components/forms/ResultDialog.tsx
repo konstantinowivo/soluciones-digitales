@@ -167,7 +167,7 @@ export function ResultDialog({ result, whatsappUrl, onClose, onRetry }: Props) {
                 className={`inline-flex h-13 items-center justify-center gap-2 rounded-full px-6 text-base font-semibold transition-colors ${
                   copy.retry
                     ? 'border border-line text-ink hover:border-ink/40 hover:bg-canvas'
-                    : 'bg-whatsapp text-white hover:bg-[#16733d]'
+                    : 'bg-whatsapp text-white hover:bg-whatsapp-strong'
                 }`}
               >
                 <WhatsAppIcon className="size-5" />

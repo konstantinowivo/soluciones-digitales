@@ -121,7 +121,9 @@ export function Needs() {
               gridArea: '1 / 1',
               transform: `translateX(calc(${offset} * var(--shift))) scale(${isActive ? 1 : isSide ? 0.85 : 0.7})`,
               zIndex: 30 - distance * 10,
-              opacity: isActive ? 1 : isSide ? 0.5 : 0,
+              // Las laterales se atenúan con una capa encima (ver abajo), no con opacidad: así el texto
+              // conserva su contraste real y solo las que quedan fuera de vista se ocultan.
+              opacity: distance > 1 ? 0 : 1,
             }
             return (
               <article
@@ -137,12 +139,19 @@ export function Needs() {
                 }`}
               >
                 <div
-                  className={`flex h-full flex-col rounded-[var(--radius-card)] border bg-surface p-6 transition-shadow duration-500 sm:p-8 lg:p-9 ${
+                  className={`relative flex h-full flex-col rounded-[var(--radius-card)] border bg-surface p-6 transition-shadow duration-500 sm:p-8 lg:p-9 ${
                     isActive
                       ? 'needs-float border-accent/30 shadow-[0_30px_60px_-28px_rgba(15,42,74,0.45)]'
                       : 'border-line shadow-[0_12px_30px_-24px_rgba(15,42,74,0.35)]'
                   }`}
                 >
+                  {/* Capa que "empuja hacia atrás" las tarjetas laterales. */}
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute inset-0 z-10 rounded-[var(--radius-card)] bg-canvas transition-opacity duration-500 ${
+                      isSide ? 'opacity-50' : 'opacity-0'
+                    }`}
+                  />
                   <div className="flex items-center justify-between">
                     <span
                       className={`flex size-12 items-center justify-center rounded-xl transition-colors duration-500 sm:size-14 sm:rounded-2xl ${
@@ -192,7 +201,7 @@ export function Needs() {
               prev()
             }}
           />
-          <div className="flex gap-2">
+          <div className="flex">
             {needs.map((item, dot) => (
               <button
                 key={item.title}
@@ -203,7 +212,7 @@ export function Needs() {
                   stopAutoplay()
                   goTo(dot)
                 }}
-                className="flex h-6 items-center"
+                className="flex h-11 min-w-7 items-center justify-center"
               >
                 <span
                   className={`block h-1.5 rounded-full transition-all duration-300 ${
