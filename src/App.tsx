@@ -1,3 +1,4 @@
+import { Analytics } from '@vercel/analytics/react'
 import { DevConfigNotice } from './components/layout/DevConfigNotice'
 import { FloatingWhatsApp } from './components/layout/FloatingWhatsApp'
 import { Footer } from './components/layout/Footer'
@@ -21,6 +22,8 @@ export default function App() {
       <Footer />
       <FloatingWhatsApp />
       <DevConfigNotice />
+      {/* Vercel Web Analytics: visitas sin cookies. Se activa en Vercel → Analytics. */}
+      <Analytics />
     </ContactIntentProvider>
   )
 }

@@ -107,6 +107,10 @@ Si más adelante llega spam igual, Web3Forms permite sumar hCaptcha desde su pan
 
 **Cambiar de proveedor:** toda la lógica de envío está en `submitInquiry()` dentro de `src/lib/inquiry.ts`. Para usar Formspree, Resend (con una función serverless) u otro endpoint, se cambia esa función y el resto del formulario queda igual.
 
+## Vercel Web Analytics
+
+El sitio incluye `<Analytics />` de `@vercel/analytics/react` en `src/App.tsx` (visitas, páginas, países y dispositivos, sin cookies). Para ver los datos: en Vercel, **Project → Analytics → Enable**. En local no envía nada.
+
 ## Google Analytics
 
 1. Crear una propiedad GA4 y copiar el **ID de medición** (`G-...`).
