@@ -1,0 +1,137 @@
+@import '@fontsource-variable/onest/wght.css';
+@import 'tailwindcss';
+
+/*
+ * Tokens de diseño. Paleta sobria: base clara, azul marino institucional
+ * y un único azul de acción para los CTA.
+ */
+@theme {
+  --font-sans: 'Onest Variable', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+
+  --color-canvas: #f4f6f9;
+  --color-surface: #ffffff;
+  --color-ink: #152238;
+  --color-muted: #536078;
+  --color-line: #d9dfe8;
+  --color-navy: #0f2a4a;
+  --color-navy-deep: #0a1e36;
+  --color-accent: #1d5bd6;
+  --color-accent-strong: #1749ad;
+  --color-accent-soft: #e8effc;
+  --color-signal: #0e7a6b;
+  --color-signal-soft: #e3f3f0;
+  --color-danger: #b42318;
+  --color-whatsapp: #1c8a4a;
+
+  --radius-card: 14px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+    overflow-x: hidden;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+
+  /* Deja espacio para el navbar fijo al navegar por anclas. */
+  section[id] {
+    scroll-margin-top: 4.5rem;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer components {
+  .container-site {
+    @apply mx-auto w-full max-w-[1180px] px-5 sm:px-8;
+  }
+
+  .section-pad {
+    @apply py-20 sm:py-24 lg:py-28;
+  }
+
+  .field {
+    @apply block w-full rounded-lg border border-line bg-surface px-3.5 py-3 text-[15px] text-ink placeholder:text-muted/70 transition-colors;
+    @apply hover:border-[#b9c3d2] focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20;
+  }
+
+  .field[aria-invalid='true'] {
+    @apply border-danger focus:ring-danger/20;
+  }
+}
+
+/* Única animación automática del sitio: el diagrama del hero se "conecta" al cargar. */
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: 120;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.flow-line {
+  stroke-dasharray: 120;
+  animation: draw-line 1.1s ease-out 0.35s both;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.live-dot {
+  animation: pulse-dot 2.4s ease-in-out 3;
+}
+
+/* Carrusel "¿Qué necesitás resolver?": la tarjeta del frente flota suavemente. */
+@keyframes needs-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.needs-float {
+  animation: needs-float 4.5s ease-in-out infinite;
+}
