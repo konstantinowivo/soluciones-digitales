@@ -21,7 +21,12 @@ export const env = {
   /** Solo dígitos, listo para https://wa.me/<numero>. Vacío si no está configurado. */
   whatsappNumber: rawWhatsApp.length >= 8 ? rawWhatsApp : '',
   contactEmail: EMAIL_PATTERN.test(rawEmail) ? rawEmail : '',
-  web3formsAccessKey: clean(import.meta.env.VITE_WEB3FORMS_ACCESS_KEY),
+  /**
+   * La access key de Web3Forms es pública por diseño (viaja al navegador en cada envío).
+   * El valor por defecto asegura que el formulario funcione aunque falte la variable en Vercel.
+   */
+  web3formsAccessKey:
+    clean(import.meta.env.VITE_WEB3FORMS_ACCESS_KEY) || '8c01977d-0b22-41ef-a1d5-b7468d32aa3b',
   gaId: GA_ID_PATTERN.test(rawGa) ? rawGa : '',
   gtmId: GTM_ID_PATTERN.test(rawGtm) ? rawGtm : '',
   isDev: import.meta.env.DEV,
